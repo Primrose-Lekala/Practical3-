@@ -1,0 +1,136 @@
+---VIEW TABLE
+
+SELECT *
+FROM shopping_trends;
+
+---record where size is missing size with purchase amount>50
+SELECT customer_id,size,purchase_amount,item_purchased
+FROM shopping_trends
+WHERE size IS NULL
+AND purchase_amount>50;
+
+---List the total number of purchases grouped by Season, treating NULL values as 'Unknown Season' 
+SELECT IFNULL(season,'Unknown season') AS season,
+count(item_purchased) AS total_number_of_purchases
+FROM shopping_trends
+GROUP BY season;
+
+---Count how many customers used each Payment Method, treating NULLs as 'Not Provided'.
+SELECT COUNT(customer_id) AS customer_count,
+IFNULL(payment_method,'Not Provided') AS payment_method
+FROM shopping_trends
+GROUP BY payment_method;
+
+---Show customers where Promo Code Used is NULL and Review Rating is below 3.0.
+SELECT customer_id,promo_code_used,review_rating,item_purchased
+FROM shopping_trends
+WHERE promo_code_used IS NULL
+AND review_rating<3.0;
+
+---Group customers by Shipping Type, and return the average purchase_amount, treating missing values as 0.
+SELECT shipping_type,ROUND(AVG(IFNULL(purchase_amount,0)),2) AS average_purchase_amount
+FROM shopping_trends 
+GROUP BY shipping_type;
+
+---Display the number of purchases per Location only for those with more than 5 purchases and no NULL Payment Method
+SELECT location,COUNT(item_purchased) AS Total_Purchases
+FROM shopping_trends
+WHERE (SELECT COUNT(item_purchased) FROM shopping_trends) >5
+AND payment_method IS NOT NULL
+GROUP BY location;
+
+---Create a column Spender Category that classifies customers using CASE: 'High' if amount > 80, 'Medium' if BETWEEN 50 AND 80, 'Low' otherwise. Replace NULLs in purchase_amount with 0.
+SELECT customer_id,
+IFNULL(purchase_amount,0) AS purchase_amount,
+CASE
+WHEN purchase_amount > 80 THEN 'High'
+WHEN purchase_amount BETWEEN 50 AND 80 THEN 'Medium'
+ELSE 'Low'
+END AS Spender_category
+FROM shopping_trends;
+
+---Find customers who have no Previous Purchases value but whose Color is not NULL
+SELECT customer_id,color,previous_purchases
+FROM shopping_trends
+WHERE previous_purchases IS NULL
+AND color IS NOT NULL;
+
+---Group records by Frequency of Purchases and show the total amount spent per group, treating NULL frequencies as 'Unknown'.
+SELECT IFNULL(frequency_of_purchases,'Unknown') AS frequency_of_purchases,
+SUM(purchase_amount) AS total_amount_spent
+FROM shopping_trends
+GROUP BY frequency_of_purchases;
+
+---Display a list of all Category values with the number of times each was purchased, excluding rows where Category is NULL
+SELECT category,COUNT(previous_purchases) AS number_of_times_each_was_purchased
+FROM shopping_trends
+WHERE category IS NOT NULL
+GROUP BY category;
+
+---Return the top 5 Locations with the highest total purchase_amount, replacing NULLs in amount with 0.
+SELECT location,SUM(IFNULL(purchase_amount,0)) AS total_purchase_amount
+FROM shopping_trends
+GROUP BY location
+ORDER BY total_purchase_amount DESC
+LIMIT 5;
+
+---Group customers by Gender and Size, and count how many entries have a NULL Color.
+SELECT gender,size, COUNT(customer_id) AS NULL_Color_count
+FROM shopping_trends
+WHERE color IS NULL
+GROUP BY gender,size;
+
+---Identify all Item Purchased where more than 3 purchases had NULL Shipping Type
+SELECT item_purchased,shipping_type
+FROM shopping_trends
+WHERE shipping_type IS NULL;
+
+---Show a count of how many customers per Payment Method have NULL Review Rating
+SELECT payment_method,COUNT(customer_id) AS Missing_Review_Rating_Count
+FROM shopping_trends
+WHERE  review_rating IS NULL
+GROUP BY payment_method;
+
+---Group by Category and return the average Review Rating, replacing NULLs with 0, and filter only where average is greater than 3.5.
+SELECT category,AVG(IFNULL(review_rating,0)) AS Average_review_rating
+FROM shopping_trends
+GROUP BY category
+HAVING AVG(IFNULL(review_rating,0)) > 3.5;
+
+---List all Colors that are missing (NULL) in at least 2 rows and the average Age of customers for those rows
+SELECT color,AVG(age) AS Average_age
+FROM shopping_trends
+WHERE  color IS NULL
+GROUP BY color,customer_id;
+
+---Use CASE to create a column Delivery Speed: 'Fast' if Shipping Type is 'Express' or 'Next Day Air', 'Slow' if 'Standard', 'Other' for all else including NULL. Then count how many customers fall into each category.
+SELECT  
+CASE
+WHEN shipping_type ='Express' THEN 'Fast'
+WHEN shipping_type ='Next Day Air' THEN 'Fast'
+WHEN shipping_type ='Standard' THEN 'Slow'
+ELSE 'Other'
+END AS Delivery_speed, 
+COUNT(customer_id) AS Customer_count
+FROM shopping_trends
+GROUP BY Delivery_speed;
+
+---Find customers whose purchase_amount is NULL and whose Promo Code Used is 'Yes'.
+SELECT customer_id,purchase_amount,promo_code_used
+FROM shopping_trends
+WHERE purchase_amount IS NULL
+AND promo_code_used = 'Yes';
+
+---Group by Location and show the maximum Previous Purchases, replacing NULLs with 0, only where the average rating is above 4.0.
+SELECT location,
+MAX(IFNULL(previous_purchases,0)) AS Maximun_previous_purchase,
+AVG(review_rating) AS Average_review_rating
+FROM shopping_trends
+GROUP BY location
+HAVING AVG(review_rating)>4.0;
+
+---Show customers who have a NULL Shipping Type but made a purchase in the range of 30 to 70 USD.
+SELECT customer_id,shipping_type,purchase_amount,item_purchased
+FROM shopping_trends
+WHERE shipping_type IS NULL
+AND purchase_amount BETWEEN 30 AND 70;
